@@ -1,16 +1,16 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   get_next_line.c                                    :+:      :+:    :+:   */
+/*   get_next_line_bonus.c                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vdarras <vdarras@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/23 12:15:47 by vdarras           #+#    #+#             */
-/*   Updated: 2024/04/29 19:04:22 by vdarras          ###   ########.fr       */
+/*   Updated: 2024/04/29 17:31:57 by vdarras          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "get_next_line.h"
+#include "get_next_line_bonus.h"
 
 static char	*fill_stash(int fd, char *buffer, char *stash)
 {
@@ -66,21 +66,19 @@ static char	*get_new_stash(char	*stash, char *line)
 {
 	size_t		i;
 	size_t		count;
-	size_t		len_line;
 	char		*new_stash;
 
 	count = 0;
-	len_line = ft_strlen(line);
-	i = ft_strlen(stash) - len_line;
+	i = ft_strlen(stash) - ft_strlen(line);
 	new_stash = malloc((i + 1) * sizeof(char));
 	if (!new_stash)
 	{
 		free (stash);
 		return (NULL);
 	}
-	while (stash[len_line + count])
+	while (stash[ft_strlen(line) + count])
 	{
-		new_stash[count] = stash[len_line + count];
+		new_stash[count] = stash[ft_strlen(line) + count];
 		count++;
 	}
 	free(stash);
@@ -90,7 +88,7 @@ static char	*get_new_stash(char	*stash, char *line)
 
 char	*get_next_line(int fd)
 {
-	static char	*stash;
+	static char	*stash[MAX_FD];
 	char		*buffer;
 	char		*line;
 
@@ -100,38 +98,19 @@ char	*get_next_line(int fd)
 	buffer = (char *)malloc(sizeof(char) * BUFFER_SIZE + 1);
 	if (!buffer)
 		return (NULL);
-	stash = fill_stash(fd, buffer, stash);
+	stash[fd] = fill_stash(fd, buffer, stash[fd]);
 	free(buffer);
-	if (!stash)
+	if (!stash[fd])
 		return (NULL);
-	line = line_from_stash(stash, line);
+	line = line_from_stash(stash[fd], line);
 	if (!line)
-		return (free(stash), NULL);
-	stash = get_new_stash(stash, line);
-	if (!stash)
+		return (free(stash[fd]), NULL);
+	stash[fd] = get_new_stash(stash[fd], line);
+	if (!stash[fd])
 		return (NULL);
 	if (*line == '\0')
 	{
-		return (free(line), free(stash), stash = NULL);
+		return (free(line), free(stash[fd]), stash[fd] = NULL);
 	}
 	return (line);
 }
-
-// int main(int argc, char **argv)
-// {
-// 	char	*line;
-
-// 	int i = 0;
-// 	int fd = open("text.txt", O_RDONLY);
-// 	if (argc == 2)
-// 	{
-// 		while (i < atoi(argv[1]))
-// 		{
-// 			line = get_next_line(fd);
-// 			printf("Ligne %d : <%s", i + 1, line);
-// 			free(line);
-// 			i++;
-// 		}
-// 	}
-// 	return (0);
-// }
